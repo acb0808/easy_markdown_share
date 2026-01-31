@@ -1,0 +1,93 @@
+:root {
+    --primary: #2563eb;
+    --bg-gray: #f8fafc;
+    --border: #e2e8f0;
+    --text-main: #1e293b;
+    --text-sub: #64748b;
+}
+
+body {
+    font-family: 'Pretendard', sans-serif;
+    margin: 0;
+    background-color: var(--bg-gray);
+    color: var(--text-main);
+}
+
+/* Navbar */
+.navbar {
+    height: 60px;
+    background: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 30px;
+    border-bottom: 1px solid var(--border);
+}
+
+.logo { font-weight: 800; font-size: 1.2rem; }
+.logo span { color: var(--primary); }
+
+/* Layout */
+.main-container {
+    display: flex;
+    height: calc(100vh - 60px);
+}
+
+.editor-pane, .result-pane {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.editor-pane { border-right: 1px solid var(--border); background: white; }
+
+/* Toolbar */
+.toolbar {
+    padding: 8px 15px;
+    background: #fff;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.toolbar button {
+    background: none; border: none; padding: 6px;
+    cursor: pointer; border-radius: 4px; color: var(--text-sub);
+    transition: 0.2s;
+}
+
+.toolbar button:hover { background: #f1f5f9; color: var(--primary); }
+.divider { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
+
+/* Editor & Preview */
+textarea {
+    flex: 1; padding: 25px; border: none; outline: none;
+    font-size: 16px; line-height: 1.7; color: #334155;
+}
+
+.tab-content { flex: 1; padding: 30px; overflow-y: auto; background: white; display: none; }
+.content-visible { display: block; }
+
+/* Markdown Styling (GitHub-ish) */
+.markdown-body h1 { border-bottom: 2px solid var(--border); padding-bottom: 10px; }
+.markdown-body table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+.markdown-body th, .markdown-body td { border: 1px solid var(--border); padding: 10px; }
+.markdown-body th { background: #f8fafc; }
+
+/* QR Card */
+.qr-card {
+    max-width: 400px; margin: 20px auto; padding: 30px;
+    background: white; border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    text-align: center;
+}
+
+#qrcode { display: inline-block; padding: 10px; border: 5px solid #fff; border-radius: 8px; }
+
+.btn {
+    padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; border: none;
+}
+.btn-primary { background: var(--primary); color: white; }
+.btn-outline { background: white; border: 1px solid var(--primary); color: var(--primary); width: 100%; margin-top: 10px;}

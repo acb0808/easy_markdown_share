@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마크다운 QR 메이커</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        :root { --primary: #2563eb; --bg: #f8fafc; --border: #e2e8f0; --text: #1e293b; --success: #10b981; }
+        body { font-family: 'Pretendard', sans-serif; margin: 0; background: var(--bg); color: var(--text); overflow: hidden; }
+        .navbar { height: 60px; background: white; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; border-bottom: 1px solid var(--border); }
+        .logo { font-weight: 800; font-size: 1.2rem; }
+        .logo span { color: var(--primary); }
+        .main-container { display: flex; height: calc(100vh - 60px); }
+        .editor-pane, .result-pane { flex: 1; display: flex; flex-direction: column; background: white; }
+        .editor-pane { border-right: 1px solid var(--border); }
+        .toolbar { padding: 10px; border-bottom: 1px solid var(--border); display: flex; gap: 8px; }
+        .toolbar button { background: none; border: none; padding: 5px; cursor: pointer; border-radius: 4px; color: #64748b; }
+        .toolbar button:hover { background: #f1f5f9; color: var(--primary); }
+        textarea { flex: 1; padding: 20px; border: none; outline: none; font-size: 16px; line-height: 1.6; resize: none; }
+        .tabs { display: flex; border-bottom: 1px solid var(--border); background: #f9f9f9; }
+        .tab-btn { flex: 1; padding: 12px; border: none; cursor: pointer; background: none; font-weight: 600; color: #94a3b8; }
+        .tab-btn.active { color: var(--primary); border-bottom: 2px solid var(--primary); background: white; }
+        .tab-content { flex: 1; padding: 25px; overflow-y: auto; display: none; }
+        .active-content { display: block; }
+        /* QR Card */
+        .qr-card { max-width: 320px; margin: 20px auto; text-align: center; padding: 20px; border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        #qrcode { display: inline-block; margin-bottom: 15px; background: white; padding: 10px; border-radius: 8px; }
+        code { display: block; background: #f1f5f9; padding: 10px; font-size: 12px; word-break: break-all; margin-bottom: 15px; border-radius: 4px; border: 1px solid var(--border); }
+        .btn { padding: 10px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; border: none; font-size: 14px; transition: 0.2s; }
+        .btn-success { background: var(--success); color: white; width: 100%; margin-bottom: 8px; }
+        .btn-success:disabled { background: #cbd5e1; cursor: not-allowed; }
+        .btn-outline { background: white; border: 1px solid var(--primary); color: var(--primary); width: 100%; }
+        .btn-secondary { background: #f1f5f9; color: #64748b; border: 1px solid var(--border); }
+        /* Markdown Style */
+        .markdown-body table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+        .markdown-body th, .markdown-body td { border: 1px solid #ddd; padding: 8px; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="logo">MarkDown <span>QR</span> Maker</div>
+        <div class="nav-actions">
+            <button class="btn btn-secondary" onclick="location.reload()">새로고침</button>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <section class="editor-pane">
+            <div class="toolbar">
+                <button onclick="insertText('h1')"><i data-lucide="heading-1"></i></button>
+                <button onclick="insertText('bold')"><i data-lucide="bold"></i></button>
+                <button onclick="insertText('link')"><i data-lucide="link"></i></button>
+                <button onclick="insertText('image')"><i data-lucide="image"></i></button>
+                <button onclick="insertText('table')"><i data-lucide="table-2"></i></button>
+            </div>
+            <textarea id="markdown-input" placeholder="여기에 마크다운을 입력하세요..."></textarea>
+        </section>
+
+        <section class="result-pane">
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab(0)">미리보기</button>
+                <button class="tab-btn" onclick="switchTab(1)">QR 코드 생성</button>
+            </div>
+            <div id="preview-tab" class="tab-content active-content markdown-body"></div>
+            <div id="qr-tab" class="tab-content">
+                <div class="qr-card">
+                    <div id="qrcode"></div>
+                    <code id="display-url">내용 작성 후 버튼을 눌러주세요.</code>
+                    
+                    <button id="optimize-btn" class="btn btn-success" onclick="optimizeQR()">✨ QR 최적화 생성</button>
+                    <button class="btn btn-outline" onclick="copyLink()">링크 복사하기</button>
+                    
+                    <p style="font-size: 11px; color: #94a3b8; margin-top: 15px;">
+                        * 단축 API를 사용하여 QR 코드를 간소화합니다.<br>
+                        * 내용이 변경되어야 다시 생성이 가능합니다.
+                    </p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const input = document.getElementById('markdown-input');
+        const preview = document.getElementById('preview-tab');
+        const qrcodeDiv = document.getElementById('qrcode');
+        const urlCode = document.getElementById('display-url');
+        const optimizeBtn = document.getElementById('optimize-btn');
+        
+        const qrcode = new QRCode(qrcodeDiv, { width: 200, height: 200 });
+
+        // 상태 관리 변수
+        let lastOptimizedContent = "";
+
+        // 입력 시 실시간 미리보기
+        input.addEventListener('input', () => {
+            preview.innerHTML = marked.parse(input.value || '내용을 입력하세요.');
+            
+            // 내용이 바뀌면 다시 버튼 활성화 여부 판단
+            if(input.value.trim() !== lastOptimizedContent) {
+                optimizeBtn.disabled = false;
+                optimizeBtn.innerText = "✨ QR 최적화 생성";
+            }
+        });
+
+        function insertText(type) {
+            const start = input.selectionStart;
+            const end = input.selectionEnd;
+            const snippets = {
+                h1: "# 제목\n", bold: "**굵은글씨**", link: "[이름](https://)",
+                image: "![설명](이미지주소)", table: "\n| 항목 | 내용 |\n|---|---|\n|  |  |\n"
+            };
+            input.setRangeText(snippets[type], start, end, 'select');
+            input.dispatchEvent(new Event('input'));
+        }
+
+        function switchTab(idx) {
+            const tabs = document.querySelectorAll('.tab-content');
+            const btns = document.querySelectorAll('.tab-btn');
+            tabs.forEach((t, i) => t.classList.toggle('active-content', i === idx));
+            btns.forEach((b, i) => b.classList.toggle('active', i === idx));
+        }
+
+        async function optimizeQR() {
+            const currentContent = input.value.trim();
+            
+            if(!currentContent) return alert("내용을 입력하세요.");
+            
+            // 중복 생성 방지 로직
+            if(currentContent === lastOptimizedContent) {
+                alert("이미 최적화된 QR 코드입니다. 내용을 수정하면 다시 만들 수 있습니다.");
+                return;
+            }
+
+            // 원본 긴 URL 생성
+            const encoded = btoa(encodeURIComponent(currentContent).replace(/%([0-9A-F]{2})/g, (m, p) => String.fromCharCode('0x' + p)));
+            const longUrl = window.location.href.replace('qr_maker.html', 'show.html') + '#' + encoded;
+
+            urlCode.innerText = "단축 중...";
+            optimizeBtn.disabled = true;
+
+            try {
+                const res = await fetch(`https://is.gd/create.php?format=json&url=${encodeURIComponent(longUrl)}`);
+                const data = await res.json();
+                const finalUrl = data.shorturl || longUrl;
+                
+                urlCode.innerText = finalUrl;
+                qrcode.makeCode(finalUrl);
+                
+                // 성공 시 현재 상태 저장
+                lastOptimizedContent = currentContent;
+                optimizeBtn.innerText = "✅ 생성 완료";
+            } catch (e) {
+                alert("단축 실패! 긴 주소로 QR을 생성합니다.");
+                urlCode.innerText = longUrl;
+                qrcode.makeCode(longUrl);
+                optimizeBtn.disabled = false;
+                optimizeBtn.innerText = "✨ QR 최적화 생성";
+            }
+        }
+
+        function copyLink() {
+            if(urlCode.innerText.includes("내용 작성")) return alert("QR을 먼저 생성해주세요.");
+            navigator.clipboard.writeText(urlCode.innerText);
+            alert("링크가 복사되었습니다!");
+        }
+
+        lucide.createIcons();
+    </script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>공유된 마크다운 보기</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        body { font-family: 'Pretendard', sans-serif; line-height: 1.7; color: #334155; margin: 0; background: #fff; }
+        .container { max-width: 800px; margin: 0 auto; padding: 40px 20px; }
+        header { border-bottom: 2px solid #f1f5f9; margin-bottom: 30px; padding-bottom: 10px; }
+        h1 { font-size: 1.5rem; color: #1e293b; }
+        .markdown-body img { max-width: 100%; border-radius: 8px; }
+        .markdown-body table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+        .markdown-body th, .markdown-body td { border: 1px solid #e2e8f0; padding: 12px; text-align: left; }
+        .markdown-body th { background: #f8fafc; }
+        footer { margin-top: 50px; font-size: 0.9rem; color: #94a3b8; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+
+        <main id="content" class="markdown-body">
+            <p>내을 불러오는 중입니다...</p>
+        </main>
+
+        <footer>
+            해당 페이지의 내용은 저작권 보호를 받을 수 있습니다. 무단 복제 및 배포를 금지합니다.
+        </footer>
+    </div>
+
+    <script>
+        window.onload = function() {
+            const hash = window.location.hash.substring(1);
+            const contentDiv = document.getElementById('content');
+
+            if (hash) {
+                try {
+                    const decoded = decodeURIComponent(Array.prototype.map.call(atob(hash), function(c) {
+                        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                    }).join(''));
+
+                    contentDiv.innerHTML = marked.parse(decoded);
+                } catch (e) {
+                    contentDiv.innerHTML = "<p>데이터를 읽는 중 오류가 발생했습니다.</p>";
+                }
+            } else {
+                contentDiv.innerHTML = "<p>표시할 내용이 없습니다. 올바른 QR 코드를 스캔해 주세요.</p>";
+            }
+        };
+    </script>
+</body>
+</html>
