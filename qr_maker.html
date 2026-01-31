@@ -154,7 +154,7 @@
                 lastOptimizedContent = currentContent;
                 optimizeBtn.innerText = "✅ 생성 완료";
             } catch (e) {
-                alert("단축 실패! 긴 주소로 QR을 생성합니다.");
+                alert("단축 실패! 링크를 복사하여 외부 qr단축 서비스를 이용해주세요.");
                 urlCode.innerText = longUrl;
                 qrcode.makeCode(longUrl);
                 optimizeBtn.disabled = false;
